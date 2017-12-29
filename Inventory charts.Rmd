@@ -27,7 +27,6 @@ SKU 112991
 source("func_InventoryStackedArea.R")
 p1 <- InventoryStackedArea(inventory, 112991)
 p1
-## comment
 ```
 
 SKU 1063491
