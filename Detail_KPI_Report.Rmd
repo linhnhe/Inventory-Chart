@@ -1,0 +1,211 @@
+---
+title: "Batch Size Optimization"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    theme: simplex
+    logo: smalllogo.png
+---
+<style type="text/css">
+
+.side { 
+   font-size: 20px;
+   font-family: Frutiger;
+}
+
+</style>
+
+```{r  include=FALSE}
+library(data.table)
+library(dplyr)
+library(highcharter)
+library(flexdashboard)
+library("quantmod")
+library(shiny)
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE)
+source("KPI_Calculation.R")
+
+```
+
+
+KPIs By Cycle Stock {data-navmenu="Detail Dashboard" .storyboard}
+=======================================================================
+
+Sidebar {.sidebar data-width=auto class="side"}
+-----------------------------------------------------------------------
+
+Select Cycle Stock :
+
+
+```{r}
+
+checkboxGroupInput("check","",choices = cycleStock.List,selected = cycleStock.List[1])
+
+```
+
+
+-----------------------------------------------------------------------
+### Daily Inventory Quantity
+
+```{r echo=FALSE}
+
+renderHighchart(
+{
+  m <- c("Cycle Stock","Day", "Inventory Quantity (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock","Day", "InventoryQuantity"))
+  tltip <- tooltip_table(m, n)
+  df.Inv$InventoryQuantity <- df.Inv$Inventory.Quantity
+  Inv.cycle <- data.frame()
+  for(i in 1 : length(input$check)){
+    Inv <- subset(df.Inv,df.Inv$CycleStock == input$check[i])
+    Inv.cycle <- rbind(Inv.cycle,Inv)
+  }
+  
+  hc <- hchart(Inv.cycle, "line", hcaes(x = Day, y = Inventory.Quantity, group = CycleStock)) %>%
+    hc_xAxis(title = list(text = "Day")) %>%
+    hc_yAxis(title = list(text = "Inventory Quantity(unit)")) %>%
+    hc_title(text = "Daily Inventory") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+hc
+})
+```
+
+### Daily Sales Quantity
+
+```{r echo=FALSE}
+
+renderHighchart(
+{
+  m <- c("Cycle Stock","Day", "Sales Quantity (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock","Day", "SalesQuantity"))
+  tltip <- tooltip_table(m, n)
+  Sales.cycle <- data.frame()
+  for(i in 1 : length(input$check)){
+    Sale <- subset(df.Sales,df.Sales$CycleStock == input$check[i])
+    Sales.cycle <- rbind(Sales.cycle,Sale)
+  }
+  
+  hc <- hchart(Sales.cycle, "line", hcaes(x = Day, y = SalesQuantity, group = CycleStock)) %>%
+    hc_xAxis(title = list(text = "Day")) %>%
+    hc_yAxis(title = list(text = "Sales Quantity(unit)")) %>%
+    hc_title(text = "Daily Sales") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+hc
+})
+```
+
+### Daily Produced Quantity
+
+```{r echo=FALSE}
+
+renderHighchart(
+{
+  m <- c("Cycle Stock","Day", "Produced Quantity (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock","Day", "ProdQuantity"))
+  tltip <- tooltip_table(m, n)
+  Prod.cycle <- data.frame()
+  for(i in 1 : length(input$check)){
+    prod <- subset(df.Prod,df.Prod$CycleStock == input$check[i])
+    Prod.cycle <- rbind(Prod.cycle,prod)
+  }
+  
+  hc <- hchart(Prod.cycle, "line", hcaes(x = Day, y = ProdQuantity, group = CycleStock)) %>%
+    hc_xAxis(title = list(text = "Day")) %>%
+    hc_yAxis(title = list(text = "Produced Quantity(unit)")) %>%
+    hc_title(text = "Daily Produced") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+hc
+})
+```
+
+KPIs by SKU {data-navmenu="Detail Dashboard" .storyboard}
+=======================================================================
+
+Sidebar {.sidebar data-width=auto class="side"}
+-----------------------------------------------------------------------
+Write something here
+
+
+```{r}
+
+selectInput("x", "Select SKU:", choices = list.SKUs)
+                  
+```
+
+
+-----------------------------------------------------------------------
+
+### Sales by SKU
+
+```{r}
+renderHighchart(
+  {
+  sales1SKU <- subset(df.Sales.SKU,df.Sales.SKU$SKU == input$x)
+  sales1SKU <- sales1SKU[order(sales1SKU$CycleStock,decreasing = FALSE),]
+  
+  m <- c("Cycle Stock", "Sales (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock", "Sales"))
+  tltip <- tooltip_table(m, n)
+
+  hc <- hchart(object = sales1SKU, "line", hcaes(x = CycleStock, y = Sales)) %>%
+    hc_xAxis(title = list(text = "Cycle Stock")) %>%
+    hc_yAxis(title = list(text = "Sales (unit)")) %>%
+    hc_title(text = "Sales unit by cycle stock") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+  
+  hc
+  # print(ggplot(data = sales.oneSKU, aes(x = Day, y = ActualSales)) + geom_line())
+  })
+```
+
+### Average Inventory by SKU
+
+```{r}
+renderHighchart(
+  {
+  inv1SKU <- subset(df.Inv.SKU,df.Inv.SKU$SKU == input$x)
+  inv1SKU <- inv1SKU[order(inv1SKU$CycleStock,decreasing = FALSE),]
+  
+  m <- c("Cycle Stock", "Average Inventory (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock", "AvgInventory"))
+  tltip <- tooltip_table(m, n)
+
+  hc <- hchart(object = inv1SKU, "line", hcaes(x = CycleStock, y = AvgInventory)) %>%
+    hc_xAxis(title = list(text = "Cycle Stock")) %>%
+    hc_yAxis(title = list(text = "Average Inventory (unit)")) %>%
+    hc_title(text = "Average inventory by cycle stock") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+  
+  hc
+  # print(ggplot(data = sales.oneSKU, aes(x = Day, y = ActualSales)) + geom_line())
+  })
+```
+
+### Produced Quantity by SKU
+
+```{r}
+renderHighchart(
+  {
+  prod1SKU <- subset(df.Prod.SKU,df.Prod.SKU$SKU == input$x)
+  prod1SKU <- prod1SKU[order(prod1SKU$CycleStock,decreasing = FALSE),]
+  
+  m <- c("Cycle Stock", "Produced Quantity (unit)")
+  n <- sprintf("{point.%s}", c("CycleStock", "ProducedQty"))
+  tltip <- tooltip_table(m, n)
+
+  hc <- hchart(object = prod1SKU, "line", hcaes(x = CycleStock, y = ProducedQty)) %>%
+    hc_xAxis(title = list(text = "Cycle Stock")) %>%
+    hc_yAxis(title = list(text = "Produced Quantity (unit)")) %>%
+    hc_title(text = "Produced Quantity by cycle stock") %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = tltip)
+  
+  hc
+  # print(ggplot(data = sales.oneSKU, aes(x = Day, y = ActualSales)) + geom_line())
+  })
+
+```

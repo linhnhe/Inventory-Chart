@@ -1,0 +1,35 @@
+---
+title: "Inventory"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+setwd("/run/media/linhnguyen/DATA/Google Drive/R development/Inventory charts")
+
+# Read the data and ensure the data is in dataframe format
+library(readr)
+inventory <- read_csv("inventory_data.csv")
+inventory <- as.data.frame(inventory)
+# 
+# library(plotly)
+# library(dplyr)
+# library(reshape2)
+
+```
+
+Column {data-height=2500}
+-----------------------------------------------------------------------
+
+### Inventory quantity by days to expiry
+
+```{r warning=FALSE, message=FALSE}
+source("func_InventoryDaysToExpirySM.R")
+
+p <- InventoryDaysToExpirySM(inventory)
+
+p
+```
+
